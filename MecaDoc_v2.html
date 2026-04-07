@@ -35,7 +35,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-ap
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 
 /* ── TOPBAR ── */
-#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#sidebar{padding-top:env(safe-area-inset-top);}
+body{padding-bottom:env(safe-area-inset-bottom);}
 #menu-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:20px;padding:4px 6px;display:none;border-radius:6px;}
 #search-wrap{flex:1;position:relative;}
 #search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:8px 12px 8px 34px;font-size:13px;outline:none;transition:border-color .2s;}
@@ -290,7 +292,7 @@ mark{background:rgba(240,165,0,.3);color:var(--accent2);border-radius:2px;}
       <button class="cat-btn" data-type="note" onclick="filterType('note')">📝 Notes</button>
     </div>
     <div id="sync-area">
-      <button id="sync-btn" onclick="signIn()">
+      <button id="sync-btn" onclick="manualSync()">
         <span class="sync-dot"></span>
         <span id="sync-label">Non connecté</span>
       </button>
@@ -433,8 +435,8 @@ mark{background:rgba(240,165,0,.3);color:var(--accent2);border-radius:2px;}
 //  CONFIG — REMPLACE PAR TES VRAIES VALEURS
 //  (voir instructions ci-dessous)
 // ══════════════════════════════════════════════════
-const CLIENT_ID = '634286147221-io3fds49mme9m095l995pq2p16m7o56m.apps.googleusercontent.com';
-const API_KEY   = 'AIzaSyByROoamCFz_MEOwxoUi3T8C7J4YceRTvg';
+const CLIENT_ID = 'REMPLACE_PAR_TON_CLIENT_ID.apps.googleusercontent.com';
+const API_KEY   = 'REMPLACE_PAR_TA_CLE_API';
 const SCOPES    = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
 const DB_FILENAME = 'mecadoc_database.json';
 
@@ -586,7 +588,14 @@ async function uploadFileToDrive(file, base64data) {
 }
 
 async function getFileUrl(driveFileId) {
-  return `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media&access_token=${accessToken}`;
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+    if(!res.ok) return null;
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch(e) { console.error('getFileUrl error',e); return null; }
 }
 
 function scheduleSave() {
@@ -626,12 +635,12 @@ function saveLocal() {
 window.addEventListener('load', () => {
   loadLocal();
   // If no CLIENT_ID configured yet, show setup instructions
-  if(CLIENT_ID === '634286147221-io3fds49mme9m095l995pq2p16m7o56m.apps.googleusercontent.com') {
+  if(CLIENT_ID === 'REMPLACE_PAR_TON_CLIENT_ID.apps.googleusercontent.com') {
     document.getElementById('auth-screen').classList.add('hidden');
     toast('⚠️ Configure ton Client ID Google (voir les instructions)','warn');
     render(); updateCounts(); updateStats();
     setSyncStatus('','Mode hors ligne — sync désactivée');
-    document.getElementById('sync-sub').textContent = 'Cliquer pour se connecter';
+    document.getElementById('sync-sub').textContent = 'Client ID non configuré';
   }
 });
 
@@ -959,7 +968,7 @@ async function openViewer(id){
   } else if(doc.type==='video' && src){
     vc.innerHTML=`<video controls src="${src}" style="max-width:100%;max-height:62vh;border-radius:var(--r)"></video>`;
   } else if(doc.type==='pdf' && src){
-    vc.innerHTML=`<embed src="${src}" type="application/pdf" style="width:100%;height:62vh;border-radius:var(--r)">`;
+    vc.innerHTML=`<iframe src="${src}" style="width:100%;height:62vh;border-radius:var(--r);border:none;background:#fff"></iframe>`;
   } else if(doc.type==='note'){
     vc.innerHTML=`<div style="padding:18px;background:var(--bg3);border-radius:var(--r);width:100%;font-size:14px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${eh(doc.note||'Note vide')}</div>`;
   } else {
