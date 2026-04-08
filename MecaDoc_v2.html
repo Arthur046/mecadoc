@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MécaDoc">
+<title>MécaDoc</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b24;--bg3:#1c2333;--card:#1c2333;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --accent:#f0a500;--accent2:#ffc840;
+  --text:#e8eaf0;--text2:#8b92a8;--text3:#555d75;
+  --danger:#e05050;--success:#2ecc71;
+  --r:10px;--rl:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden;}
+#app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:100;transition:transform .3s;padding-top:env(safe-area-inset-top);}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* TOPBAR */
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;padding:10px 14px;padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(14px + env(safe-area-inset-left));padding-right:calc(14px + env(safe-area-inset-right));}
+#menu-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:22px;padding:4px 6px;display:none;border-radius:6px;line-height:1;}
+#search-wrap{flex:1;position:relative;}
+#search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:8px 12px 8px 34px;font-size:13px;outline:none;transition:border-color .2s;}
+#search-wrap input:focus{border-color:var(--accent);}
+.s-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none;}
+#add-btn{background:var(--accent);color:#1a0e00;border:none;border-radius:var(--r);padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+#add-btn:active{background:var(--accent2);}
+
+/* LOGO */
+.logo{padding:14px 14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#1a0e00;flex-shrink:0;}
+.logo-text{font-size:16px;font-weight:700;letter-spacing:-.3px;}
+.logo-text span{color:var(--accent);}
+
+/* SIDEBAR NAV */
+.sb-scroll{overflow-y:auto;flex:1;padding:8px 6px;}
+.sb-section-title{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 4px;}
+.sb-section-title h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);}
+.sb-add-cat{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 4px;border-radius:4px;line-height:1;transition:color .15s;}
+.sb-add-cat:hover{color:var(--accent);}
+.cat-btn{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;padding:8px 10px;border-radius:var(--r);color:var(--text2);font-size:12.5px;cursor:pointer;text-align:left;transition:all .15s;-webkit-tap-highlight-color:transparent;position:relative;}
+.cat-btn:hover{background:var(--bg3);color:var(--text);}
+.cat-btn.active{background:rgba(240,165,0,.12);color:var(--accent);}
+.cat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cat-count{margin-left:auto;background:var(--bg3);color:var(--text3);font-size:10px;padding:1px 6px;border-radius:20px;}
+.cat-btn.active .cat-count{background:rgba(240,165,0,.2);color:var(--accent);}
+.cat-del{display:none;position:absolute;right:6px;background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:2px;}
+.cat-btn:hover .cat-del{display:block;}
+
+/* SYNC */
+#sync-area{margin-top:auto;padding:10px 12px;border-top:1px solid var(--border);padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+#sync-btn{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text2);padding:9px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+#sync-btn:hover{border-color:var(--border2);color:var(--text);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.sync-dot.ok{background:var(--success);}
+.sync-dot.spin{background:var(--accent);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+#sync-label{flex:1;text-align:left;}
+
+/* STATS */
+#stats-bar{padding:5px 14px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:14px;font-size:11px;color:var(--text3);flex-shrink:0;flex-wrap:wrap;}
+.stat-item span{color:var(--text2);font-weight:600;}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));}
+#view-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+#view-bar h2{font-size:15px;font-weight:600;flex:1;}
+.sort-sel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text2);padding:5px 8px;font-size:11px;cursor:pointer;}
+.view-btn{background:none;border:1px solid var(--border);border-radius:var(--r);padding:5px 9px;color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s;}
+.view-btn.active{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+
+/* GRID */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+#grid.list-view{grid-template-columns:1fr;gap:6px;}
+
+/* CARDS */
+.doc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;-webkit-tap-highlight-color:transparent;}
+.doc-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.card-thumb{height:100px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden;}
+.card-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.card-thumb .fi{position:relative;z-index:1;}
+.card-body{padding:9px 11px 11px;}
+.card-name{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.card-meta{font-size:10px;color:var(--text3);}
+.card-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.card-actions{position:absolute;top:5px;right:5px;display:flex;gap:3px;opacity:0;transition:opacity .2s;}
+.doc-card:hover .card-actions{opacity:1;}
+.ca-btn{width:28px;height:28px;border-radius:6px;background:rgba(0,0,0,.7);border:none;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.ca-btn.del:hover{background:var(--danger);}
+#grid.list-view .doc-card{display:flex;align-items:center;border-radius:var(--r);}
+#grid.list-view .card-thumb{height:52px;width:60px;font-size:20px;flex-shrink:0;border-radius:0;}
+#grid.list-view .card-body{flex:1;display:flex;align-items:center;gap:10px;padding:8px 12px;}
+#grid.list-view .card-name{flex:1;margin:0;}
+#grid.list-view .card-meta{display:none;}
+
+/* EMPTY */
+#empty{text-align:center;padding:50px 20px;color:var(--text3);display:none;}
+#empty .ei{font-size:44px;margin-bottom:10px;opacity:.4;}
+#empty h3{font-size:15px;color:var(--text2);margin-bottom:5px;}
+
+/* MODALS */
+.ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;pointer-events:none;transition:opacity .25s;}
+.ov.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;transform:translateY(30px);transition:transform .25s;padding-bottom:env(safe-area-inset-bottom);}
+.ov.open .modal{transform:translateY(0);}
+@media(min-width:600px){
+  .ov{align-items:center;padding:16px;}
+  .modal{border-radius:var(--rl);max-height:90vh;transform:scale(.96);}
+  .ov.open .modal{transform:scale(1);}
+}
+.mh{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.mh h3{flex:1;font-size:14px;font-weight:600;}
+.xbtn{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1;-webkit-tap-highlight-color:transparent;}
+.mb{padding:16px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.field input,.field textarea,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:9px 11px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:70px;}
+
+/* DROPZONE */
+#dz{border:2px dashed var(--border2);border-radius:var(--r);padding:22px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+#dz:hover,#dz.over{border-color:var(--accent);background:rgba(240,165,0,.04);}
+#dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:0;}
+.dz-icon{font-size:26px;margin-bottom:6px;}
+.dz-txt{font-size:13px;color:var(--text2);}
+.dz-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.dz-sel{font-size:12px;color:var(--accent);font-weight:600;margin-top:6px;word-break:break-all;}
+.prog{height:3px;background:var(--bg3);border-radius:3px;margin-top:8px;overflow:hidden;display:none;}
+.prog-bar{height:100%;background:var(--accent);width:0;transition:width .3s;border-radius:3px;}
+
+/* TAGS */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;min-height:38px;cursor:text;transition:border-color .2s;}
+.tags-wrap:focus-within{border-color:var(--accent);}
+.tpill{display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;background:rgba(240,165,0,.15);color:var(--accent);}
+.tpill button{background:none;border:none;cursor:pointer;color:inherit;opacity:.7;font-size:14px;line-height:1;padding:0;}
+.tags-wrap input{border:none;background:none;color:var(--text);font-size:13px;outline:none;min-width:80px;padding:2px 4px;flex:1;}
+
+/* MODAL FOOTER */
+.mf{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.btn-sec{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:var(--r);font-size:13px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.btn-sec:hover{border-color:var(--border2);color:var(--text);}
+.btn-pri{background:var(--accent);color:#1a0e00;border:none;padding:8px 18px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;}
+.btn-pri:hover{background:var(--accent2);}
+
+/* VIEWER */
+#viewer-content{min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;width:100%;}
+#viewer-content img{max-width:100%;max-height:55vh;border-radius:var(--r);object-fit:contain;}
+#viewer-content video{max-width:100%;max-height:55vh;border-radius:var(--r);}
+#viewer-content iframe{width:100%;height:55vh;border-radius:var(--r);border:none;background:#fff;}
+.no-prev{text-align:center;color:var(--text2);padding:30px;}
+.no-prev .icon{font-size:44px;margin-bottom:10px;}
+.loading-prev{color:var(--text3);font-size:13px;display:flex;align-items:center;gap:8px;}
+.spin-icon{animation:spin 1s linear infinite;display:inline-block;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);};}
+
+/* ZIP VIEWER */
+.zip-list{width:100%;background:var(--bg3);border-radius:var(--r);overflow:hidden;}
+.zip-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.zip-item:last-child{border-bottom:none;}
+.zip-item:hover{background:var(--bg2);}
+.zip-item-icon{font-size:18px;flex-shrink:0;}
+.zip-item-name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.zip-item-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+.zip-item-dl{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:4px 10px;font-size:11px;cursor:pointer;transition:all .15s;}
+.zip-item-dl:hover{border-color:var(--accent);color:var(--accent);}
+.zip-header{padding:10px 14px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;}
+
+/* CAT COLORS */
+.c-moteur{background:rgba(74,144,217,.15);color:#6aaef0;}
+.c-electricite{background:rgba(240,165,0,.15);color:#f0a500;}
+.c-diagnostic{background:rgba(46,204,113,.15);color:#2ecc71;}
+.c-carrosserie{background:rgba(180,80,180,.15);color:#c060c0;}
+.c-transmission{background:rgba(224,80,80,.15);color:#e05050;}
+.c-freinage{background:rgba(255,120,40,.15);color:#ff8040;}
+.c-suspension{background:rgba(80,200,200,.15);color:#40c0c0;}
+.c-general{background:rgba(139,146,168,.15);color:#8b92a8;}
+.c-custom{background:rgba(100,180,255,.15);color:#64b4ff;}
+
+/* SIDEBAR OVERLAY */
+#sb-ov{display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);}
+#sb-ov.open{display:block;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));right:18px;z-index:9999;padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;animation:slideUp .25s ease;pointer-events:none;max-width:300px;}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+mark{background:rgba(240,165,0,.3);color:var(--accent2);border-radius:2px;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* AUTH */
+#auth-screen{position:fixed;inset:0;z-index:2000;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:30px;}
+#auth-screen.hidden{display:none;}
+.auth-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:28px;max-width:340px;width:100%;text-align:center;}
+.auth-logo{font-size:38px;margin-bottom:10px;}
+.auth-title{font-size:20px;font-weight:700;margin-bottom:5px;}
+.auth-title span{color:var(--accent);}
+.auth-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+#g-signin-btn{width:100%;background:#fff;color:#1a1a1a;border:none;border-radius:var(--r);padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;}
+#g-signin-btn:active{background:#e8e8e8;}
+.auth-note{font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5;}
+
+/* RESPONSIVE */
+@media(max-width:680px){
+  #sidebar{position:fixed;height:100%;left:0;top:0;transform:translateX(-230px);}
+  #sidebar.open{transform:translateX(0);}
+  #menu-btn{display:block;}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
+  .card-thumb{height:90px;}
+  .mf{justify-content:stretch;}
+  .mf button{flex:1;}
+}
+
+/* NEW CAT MODAL */
+#newcat-ov .modal{max-width:360px;}
+.color-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.color-opt.selected{border-color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">🔧</div>
+    <div class="auth-title">Méca<span>Doc</span></div>
+    <div class="auth-sub">Connecte-toi avec Google pour synchroniser ta bibliothèque mécanique entre tous tes appareils.</div>
+    <button id="g-signin-btn" onclick="signIn()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.43-8.83l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="auth-note">Tes fichiers sont stockés dans ton propre Google Drive. MécaDoc n'y accède que pour sauvegarder tes documents.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      <div class="logo-text">Méca<span>Doc</span></div>
+    </div>
+    <div class="sb-scroll">
+      <div class="sb-section-title">
+        <h3>Catégories</h3>
+        <button class="sb-add-cat" onclick="openNewCat()" title="Ajouter une catégorie">＋</button>
+      </div>
+      <div id="cat-list"></div>
+      <div class="sb-section-title" style="margin-top:8px;"><h3>Type</h3></div>
+      <button class="cat-btn active" data-type="all" onclick="filterType('all')">📄 Tous</button>
+      <button class="cat-btn" data-type="image" onclick="filterType('image')">🖼️ Images</button>
+      <button class="cat-btn" data-type="pdf" onclick="filterType('pdf')">📕 PDF</button>
+      <button class="cat-btn" data-type="video" onclick="filterType('video')">🎬 Vidéos</button>
+      <button class="cat-btn" data-type="zip" onclick="filterType('zip')">🗜️ ZIP</button>
+      <button class="cat-btn" data-type="note" onclick="filterType('note')">📝 Notes</button>
+    </div>
+    <div id="sync-area">
+      <button id="sync-btn" onclick="syncClick()">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-label">Se connecter à Google</span>
+      </button>
+    </div>
+  </div>
+  <div id="sb-ov" onclick="closeSidebar()"></div>
+
+  <div id="main">
+    <div id="topbar">
+      <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div id="search-wrap">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="search" placeholder="Recherche…" oninput="doSearch(this.value)">
+      </div>
+      <button id="add-btn" onclick="openAdd()">＋ Ajouter</button>
+    </div>
+    <div id="stats-bar">
+      <div class="stat-item">Fichiers : <span id="st-total">0</span></div>
+      <div class="stat-item">Taille : <span id="st-size">–</span></div>
+      <div class="stat-item" id="st-fw" style="display:none">Filtre : <span id="st-filter"></span></div>
+    </div>
+    <div id="content">
+      <div id="view-bar">
+        <h2 id="view-title">Tous les documents</h2>
+        <select class="sort-sel" onchange="doSort(this.value)">
+          <option value="date-desc">Plus récent</option>
+          <option value="date-asc">Plus ancien</option>
+          <option value="name-asc">Nom A→Z</option>
+          <option value="name-desc">Nom Z→A</option>
+        </select>
+        <button class="view-btn active" id="vbg" onclick="setView('grid')">⊞</button>
+        <button class="view-btn" id="vbl" onclick="setView('list')">☰</button>
+      </div>
+      <div id="grid"></div>
+      <div id="empty"><div class="ei">📂</div><h3>Aucun document</h3><p>Appuie sur "＋ Ajouter" pour importer ton premier fichier.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="ov" id="add-ov">
+  <div class="modal">
+    <div class="mh"><h3 id="add-title">Ajouter un document</h3><button class="xbtn" onclick="closeAdd()">×</button></div>
+    <div class="mb">
+      <div class="field">
+        <label>Fichier(s)</label>
+        <div id="dz" ondragover="dzOv(event)" ondragleave="dzLv()" ondrop="dzDrop(event)">
+          <input type="file" id="file-inp" accept="*/*" multiple onchange="fileSel(event)">
+          <div class="dz-icon">📁</div>
+          <div class="dz-txt">Appuie ici pour sélectionner</div>
+          <div class="dz-sub">PDF, images, vidéos, ZIP… ou glisse-dépose sur PC</div>
+          <div class="dz-sel" id="dz-sel"></div>
+          <div class="prog" id="prog"><div class="prog-bar" id="prog-bar"></div></div>
+        </div>
+      </div>
+      <div class="field"><label>Note / Description</label><textarea id="note-inp" placeholder="Contexte, observations, références…"></textarea></div>
+      <div class="field"><label>Nom personnalisé</label><input type="text" id="name-inp" placeholder="Optionnel — laisser vide = nom du fichier"></div>
+      <div class="field">
+        <label>Catégorie</label>
+        <select id="cat-inp"></select>
+      </div>
+      <div class="field">
+        <label>Tags (Entrée pour valider)</label>
+        <div class="tags-wrap" id="tags-wrap" onclick="document.getElementById('tag-inp').focus()">
+          <input type="text" id="tag-inp" placeholder="ex: golf4, turbo, OBD…" onkeydown="tagKd(event)">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="closeAdd()">Annuler</button>
+      <button class="btn-pri" onclick="saveDoc()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEWER MODAL -->
+<div class="ov" id="view-ov">
+  <div class="modal" style="max-width:700px">
+    <div class="mh"><h3 id="vw-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Document</h3><button class="xbtn" onclick="closeViewer()">×</button></div>
+    <div class="mb">
+      <div id="viewer-content"></div>
+      <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:80px;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Catégorie</div><div id="vw-cat" class="tag"></div></div>
+        <div style="flex:1;min-width:80px;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Date</div><div id="vw-date" style="font-size:12px;"></div></div>
+        <div style="flex:1;min-width:80px;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Taille</div><div id="vw-size" style="font-size:12px;"></div></div>
+      </div>
+      <div id="vw-tags" style="margin-top:10px;"></div>
+      <div id="vw-note" style="margin-top:10px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="dlDoc()">⬇ Télécharger</button>
+      <button class="btn-sec" onclick="editCurrent()">✏️ Modifier</button>
+      <button class="btn-sec" style="color:var(--danger);" onclick="delFromViewer()">🗑 Supprimer</button>
+      <button class="btn-pri" onclick="closeViewer()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CATEGORY MODAL -->
+<div class="ov" id="newcat-ov">
+  <div class="modal" style="max-width:360px;">
+    <div class="mh"><h3>Nouvelle catégorie</h3><button class="xbtn" onclick="closeNewCat()">×</button></div>
+    <div class="mb">
+      <div class="field">
+        <label>Nom de la catégorie</label>
+        <input type="text" id="newcat-name" placeholder="ex: Injection, Climatisation…" maxlength="30">
+      </div>
+      <div class="field">
+        <label>Couleur</label>
+        <div class="color-picker" id="color-picker"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="closeNewCat()">Annuler</button>
+      <button class="btn-pri" onclick="saveNewCat()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ── CONFIG ──
+const CLIENT_ID = '634286147221-io3fds49mme9m095l995pq2p16m7o56m.apps.googleusercontent.com';
+const API_KEY   = 'AIzaSyByROoamCFz_MEOwxoUi3T8C7J4YceRTvg';
+const SCOPES    = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const DB_FILE   = 'mecadoc_master.json';
+const LS_KEY    = 'mecadoc_master';
+const LS_TOKEN  = 'mecadoc_token';
+const LS_EXPIRY = 'mecadoc_expiry';
+
+// ── DEFAULT CATEGORIES ──
+const DEFAULT_CATS = [
+  {id:'moteur',    label:'Moteur',       color:'#6aaef0'},
+  {id:'electricite',label:'Électricité', color:'#f0a500'},
+  {id:'diagnostic',label:'Diagnostic',   color:'#2ecc71'},
+  {id:'carrosserie',label:'Carrosserie', color:'#c060c0'},
+  {id:'transmission',label:'Transmission',color:'#e05050'},
+  {id:'freinage',  label:'Freinage',     color:'#ff8040'},
+  {id:'suspension',label:'Suspension',   color:'#40c0c0'},
+  {id:'general',   label:'Général',      color:'#8b92a8'},
+];
+const PALETTE = ['#6aaef0','#f0a500','#2ecc71','#c060c0','#e05050','#ff8040','#40c0c0','#e040fb','#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#feca57','#ff9ff3'];
+
+// ── STATE ──
+let docs=[], selTags=[], selFiles=[], editMode=false, editId=null, viewerId=null;
+let catF='all', typeF='all', searchQ='', sortV='date-desc', viewMode='grid';
+let token=null, dbFileId=null, dirty=false, syncTmr=null;
+let blobUrls={};
+let categories=[...DEFAULT_CATS];
+let selColor=PALETTE[0];
+
+// ── INIT ──
+window.addEventListener('load', ()=>{
+  loadLocal();
+  buildCatSidebar();
+  buildCatSelect();
+  buildColorPicker();
+  render(); updateCounts(); updateStats();
+  // Try to restore token
+  const saved = localStorage.getItem(LS_TOKEN);
+  const expiry = parseInt(localStorage.getItem(LS_EXPIRY)||'0');
+  if(saved && Date.now() < expiry){
+    token = saved;
+    document.getElementById('auth-screen').classList.add('hidden');
+    setSyncStatus('syncing','Chargement…');
+    loadOrCreateDB();
+  }
+});
+
+// ── AUTH ──
+function signIn(){
+  if(!window.google){ toast('Chargement en cours, réessaie…','warn'); return; }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async(res)=>{
+      if(res.error){ toast('Connexion annulée','warn'); return; }
+      token = res.access_token;
+      // Save token for 55min (tokens expire after 1h)
+      localStorage.setItem(LS_TOKEN, token);
+      localStorage.setItem(LS_EXPIRY, String(Date.now() + 55*60*1000));
+      document.getElementById('auth-screen').classList.add('hidden');
+      setSyncStatus('syncing','Connexion…');
+      await loadOrCreateDB();
+    }
+  });
+  client.requestAccessToken();
+}
+
+// Auto-refresh token every 50 min
+setInterval(()=>{
+  if(!token) return;
+  if(!window.google) return;
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPES,
+    callback: (res)=>{
+      if(!res.error){
+        token = res.access_token;
+        localStorage.setItem(LS_TOKEN, token);
+        localStorage.setItem(LS_EXPIRY, String(Date.now() + 55*60*1000));
+      }
+    }
+  });
+  client.requestAccessToken({prompt:''});
+}, 50*60*1000);
+
+function syncClick(){ if(token) pushDB(); else signIn(); }
+
+// ── DRIVE ──
+async function driveReq(url, opts={}){
+  const r = await fetch(url,{...opts, headers:{'Authorization':'Bearer '+token,...(opts.headers||{})}});
+  if(r.status===401){ token=null; localStorage.removeItem(LS_TOKEN); setSyncStatus('','Se connecter à Google'); throw new Error('Token expired'); }
+  if(!r.ok) throw new Error('Drive '+r.status);
+  const ct=r.headers.get('content-type')||'';
+  return ct.includes('json') ? r.json() : r.text();
+}
+
+async function loadOrCreateDB(){
+  try{
+    // Search for master DB
+    let list = await driveReq('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22'+DB_FILE+'%22&fields=files(id)');
+    if(list.files&&list.files.length){
+      dbFileId=list.files[0].id;
+      const raw = await driveReq('https://www.googleapis.com/drive/v3/files/'+dbFileId+'?alt=media');
+      try{
+        const parsed=typeof raw==='string'?JSON.parse(raw):raw;
+        if(parsed.docs) docs=parsed.docs;
+        else if(Array.isArray(parsed)) docs=parsed;
+        if(parsed.categories) categories=[...DEFAULT_CATS,...parsed.categories.filter(c=>!DEFAULT_CATS.find(d=>d.id===c.id))];
+      }catch(e){}
+      saveLocal(); buildCatSidebar(); buildCatSelect(); render(); updateCounts(); updateStats();
+      toast('✓ Bibliothèque chargée — '+docs.length+' document(s)');
+    } else {
+      // Try to migrate from old Drive DB files
+      const oldNames=['mecadoc_db_v3.json','mecadoc_database.json','mecadoc_db.json'];
+      let migrated=false;
+      for(const oldName of oldNames){
+        try{
+          const ol=await driveReq('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22'+oldName+'%22&fields=files(id)');
+          if(ol.files&&ol.files.length){
+            const oldRaw=await driveReq('https://www.googleapis.com/drive/v3/files/'+ol.files[0].id+'?alt=media');
+            try{
+              const p=typeof oldRaw==='string'?JSON.parse(oldRaw):oldRaw;
+              if(p.docs&&p.docs.length){ docs=p.docs; if(p.categories) categories=[...DEFAULT_CATS,...p.categories.filter(c=>!DEFAULT_CATS.find(d=>d.id===c.id))]; migrated=true; break; }
+              else if(Array.isArray(p)&&p.length){ docs=p; migrated=true; break; }
+            }catch(e){}
+          }
+        }catch(e){}
+      }
+      await pushDB();
+      if(migrated){
+        saveLocal(); buildCatSidebar(); buildCatSelect(); render(); updateCounts(); updateStats();
+        toast('✓ Données migrées depuis une ancienne version — '+docs.length+' document(s) récupérés');
+      } else {
+        toast('✓ Nouvelle bibliothèque créée');
+      }
+    }
+    setSyncStatus('ok','Connecté à Google Drive');
+  }catch(e){ setSyncStatus('','Erreur — réessaie'); console.error(e); }
+}
+
+async function pushDB(){
+  if(!token) return;
+  setSyncStatus('syncing','Sauvegarde…');
+  try{
+    const customCats = categories.filter(c=>!DEFAULT_CATS.find(d=>d.id===c.id));
+    const body=JSON.stringify({docs, categories:customCats});
+    if(dbFileId){
+      await fetch('https://www.googleapis.com/upload/drive/v3/files/'+dbFileId+'?uploadType=media',{
+        method:'PATCH', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}, body
+      });
+    } else {
+      const meta=JSON.stringify({name:DB_FILE,parents:['appDataFolder']});
+      const fd=new FormData();
+      fd.append('metadata',new Blob([meta],{type:'application/json'}));
+      fd.append('file',new Blob([body],{type:'application/json'}));
+      const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+        method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd
+      });
+      const j=await r.json(); dbFileId=j.id;
+    }
+    saveLocal(); dirty=false;
+    setSyncStatus('ok','Sauvegardé '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){ setSyncStatus('ok','Erreur sauvegarde'); console.error(e); }
+}
+
+async function uploadFile(file){
+  if(!token) return null;
+  try{
+    let folderId=localStorage.getItem('mecadoc_fid');
+    if(!folderId){
+      const fl=await driveReq("https://www.googleapis.com/drive/v3/files?q=name%3D'MecaDoc'+and+mimeType%3D'application%2Fvnd.google-apps.folder'+and+trashed%3Dfalse&fields=files(id)");
+      if(fl.files&&fl.files.length){ folderId=fl.files[0].id; }
+      else{ const cr=await driveReq('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'MecaDoc',mimeType:'application/vnd.google-apps.folder'})}); folderId=cr.id; }
+      localStorage.setItem('mecadoc_fid',folderId);
+    }
+    const meta=JSON.stringify({name:file.name,parents:[folderId]});
+    const fd=new FormData(); fd.append('metadata',new Blob([meta],{type:'application/json'})); fd.append('file',file);
+    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const j=await r.json(); return j.id;
+  }catch(e){ console.error('upload',e); return null; }
+}
+
+async function getBlobUrl(driveFileId){
+  if(blobUrls[driveFileId]) return blobUrls[driveFileId];
+  try{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?alt=media',{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok) return null;
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    blobUrls[driveFileId]=url;
+    return url;
+  }catch(e){ return null; }
+}
+
+function scheduleSave(){ dirty=true; clearTimeout(syncTmr); syncTmr=setTimeout(()=>{ if(dirty&&token) pushDB(); },2500); }
+function setSyncStatus(state,label){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-label');
+  dot.className='sync-dot'+(state==='ok'?' ok':state==='syncing'?' spin':'');
+  lbl.textContent=label;
+}
+
+// ── LOCAL STORAGE ──
+function loadLocal(){
+  try{
+    // Try current master key first
+    let r=localStorage.getItem(LS_KEY);
+    // Migration: try old keys if nothing found
+    if(!r) r=localStorage.getItem('mecadoc_v3');
+    if(!r) r=localStorage.getItem('mecadoc_local_v2');
+    if(!r) r=localStorage.getItem('mecadoc_v2');
+    if(r){
+      const p=JSON.parse(r);
+      if(p.docs) docs=p.docs;
+      else if(Array.isArray(p)) docs=p;
+      if(p.categories) categories=[...DEFAULT_CATS,...p.categories.filter(c=>!DEFAULT_CATS.find(d=>d.id===c.id))];
+      // Save to master key immediately
+      saveLocal();
+    }
+  }catch(e){}
+}
+function saveLocal(){
+  try{
+    const customCats=categories.filter(c=>!DEFAULT_CATS.find(d=>d.id===c.id));
+    localStorage.setItem(LS_KEY,JSON.stringify({docs,categories:customCats}));
+  }catch(e){}
+}
+
+// ── CATEGORIES ──
+function buildCatSidebar(){
+  const el=document.getElementById('cat-list');
+  el.innerHTML='';
+  // All button
+  const allBtn=document.createElement('button');
+  allBtn.className='cat-btn'+(catF==='all'?' active':'');
+  allBtn.dataset.cat='all';
+  allBtn.onclick=()=>filterCat('all');
+  allBtn.innerHTML=`<span class="cat-dot" style="background:var(--text3)"></span>Tous<span class="cat-count" id="cnt-all">${docs.length}</span>`;
+  el.appendChild(allBtn);
+  categories.forEach(c=>{
+    const isCustom=!DEFAULT_CATS.find(d=>d.id===c.id);
+    const btn=document.createElement('button');
+    btn.className='cat-btn'+(catF===c.id?' active':'');
+    btn.dataset.cat=c.id;
+    btn.onclick=()=>filterCat(c.id);
+    const count=docs.filter(d=>d.cat===c.id).length;
+    btn.innerHTML=`<span class="cat-dot" style="background:${c.color}"></span>${eh(c.label)}<span class="cat-count" id="cnt-${c.id}">${count}</span>${isCustom?`<button class="cat-del" onclick="event.stopPropagation();deleteCat('${c.id}')" title="Supprimer">×</button>`:''}`;
+    el.appendChild(btn);
+  });
+}
+
+function buildCatSelect(){
+  const sel=document.getElementById('cat-inp');
+  const prev=sel.value;
+  sel.innerHTML='';
+  categories.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.id; o.textContent=c.label;
+    sel.appendChild(o);
+  });
+  if(prev) sel.value=prev;
+}
+
+function buildColorPicker(){
+  const cp=document.getElementById('color-picker');
+  cp.innerHTML='';
+  PALETTE.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-opt'+(c===selColor?' selected':'');
+    d.style.background=c;
+    d.onclick=()=>{ selColor=c; document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected')); d.classList.add('selected'); };
+    cp.appendChild(d);
+  });
+}
+
+function openNewCat(){ selColor=PALETTE[0]; buildColorPicker(); document.getElementById('newcat-name').value=''; document.getElementById('newcat-ov').classList.add('open'); setTimeout(()=>document.getElementById('newcat-name').focus(),300); }
+function closeNewCat(){ document.getElementById('newcat-ov').classList.remove('open'); }
+
+function saveNewCat(){
+  const name=document.getElementById('newcat-name').value.trim();
+  if(!name){ toast('Donne un nom à la catégorie','warn'); return; }
+  const id='cat_'+Date.now();
+  categories.push({id, label:name, color:selColor});
+  saveLocal(); scheduleSave();
+  buildCatSidebar(); buildCatSelect();
+  closeNewCat(); toast('Catégorie "'+name+'" créée');
+}
+
+function deleteCat(id){
+  const cat=categories.find(c=>c.id===id);
+  if(!cat) return;
+  const count=docs.filter(d=>d.cat===id).length;
+  if(count>0 && !confirm(`Cette catégorie contient ${count} document(s). Les supprimer aussi ?`)) return;
+  if(count>0) docs=docs.filter(d=>d.cat!==id);
+  categories=categories.filter(c=>c.id!==id);
+  if(catF===id) catF='all';
+  saveLocal(); scheduleSave(); buildCatSidebar(); buildCatSelect(); render(); updateCounts(); updateStats();
+  toast('Catégorie supprimée');
+}
+
+function getCatColor(catId){
+  const c=categories.find(x=>x.id===catId);
+  return c?c.color:'#8b92a8';
+}
+
+// ── RENDER ──
+function getFiltered(){
+  let l=[...docs];
+  if(catF!=='all') l=l.filter(d=>d.cat===catF);
+  if(typeF!=='all') l=l.filter(d=>d.type===typeF);
+  if(searchQ){ const q=searchQ.toLowerCase(); l=l.filter(d=>d.name.toLowerCase().includes(q)||(d.note||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.toLowerCase().includes(q))||d.cat.toLowerCase().includes(q)); }
+  l.sort((a,b)=>{
+    if(sortV==='date-desc') return new Date(b.date)-new Date(a.date);
+    if(sortV==='date-asc') return new Date(a.date)-new Date(b.date);
+    if(sortV==='name-asc') return a.name.localeCompare(b.name);
+    return b.name.localeCompare(a.name);
+  });
+  return l;
+}
+
+function render(){
+  const list=getFiltered();
+  const grid=document.getElementById('grid');
+  const empty=document.getElementById('empty');
+  if(!list.length){ grid.innerHTML=''; empty.style.display='block'; updateStats(); return; }
+  empty.style.display='none';
+  const q=searchQ.toLowerCase();
+  grid.innerHTML=list.map(d=>{
+    const icon=fIcon(d.type,d.mimeType);
+    const color=getCatColor(d.cat);
+    const thumb=d.type==='image'&&d.thumb?`<img src="${d.thumb}" alt="" loading="lazy">`:'';
+    const tg=(d.tags||[]).slice(0,2).map(t=>`<span class="tag" style="background:${color}22;color:${color}">${hl(t,q)}</span>`).join('');
+    return `<div class="doc-card" onclick="openViewer('${d.id}')">
+      <div class="card-thumb">${thumb}<span class="fi">${icon}</span>
+        <div class="card-actions">
+          <button class="ca-btn" onclick="event.stopPropagation();editDoc('${d.id}')">✏️</button>
+          <button class="ca-btn del" onclick="event.stopPropagation();delDoc('${d.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${hl(d.name,q)}</div>
+        <div class="card-meta">${getCatLabel(d.cat)} · ${fSize(d.size)}</div>
+        <div class="card-tags">${tg}</div>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function getCatLabel(id){ const c=categories.find(x=>x.id===id); return c?c.label:id; }
+function hl(t,q){ if(!q) return eh(t); return eh(t).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'); }
+function eh(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fIcon(t,m){
+  if(t==='image') return '🖼️'; if(t==='video') return '🎬';
+  if(t==='pdf') return '📕'; if(t==='note') return '📝';
+  if(t==='zip') return '🗜️';
+  if((m||'').includes('word')) return '📘'; if((m||'').includes('excel')) return '📊';
+  return '📄';
+}
+function fSize(b){ if(!b) return '–'; if(b<1024) return b+'o'; if(b<1048576) return Math.round(b/1024)+'Ko'; return (b/1048576).toFixed(1)+'Mo'; }
+
+function updateCounts(){
+  const allEl=document.getElementById('cnt-all');
+  if(allEl) allEl.textContent=docs.length;
+  categories.forEach(c=>{ const e=document.getElementById('cnt-'+c.id); if(e) e.textContent=docs.filter(d=>d.cat===c.id).length; });
+}
+function updateStats(){
+  const l=getFiltered();
+  document.getElementById('st-total').textContent=l.length;
+  document.getElementById('st-size').textContent=fSize(l.reduce((s,d)=>s+(d.size||0),0));
+  const fw=document.getElementById('st-fw');
+  if(searchQ||catF!=='all'||typeF!=='all'){
+    fw.style.display='';
+    const p=[];
+    if(catF!=='all') p.push(getCatLabel(catF));
+    if(typeF!=='all') p.push(typeF);
+    if(searchQ) p.push('"'+searchQ+'"');
+    document.getElementById('st-filter').textContent=p.join(' + ');
+  } else fw.style.display='none';
+}
+
+// ── FILTERS ──
+function filterCat(c){ catF=c; buildCatSidebar(); document.getElementById('view-title').textContent=c==='all'?'Tous les documents':getCatLabel(c); closeSidebar(); render(); }
+function filterType(t){ typeF=t; document.querySelectorAll('.cat-btn[data-type]').forEach(b=>b.classList.toggle('active',b.dataset.type===t)); closeSidebar(); render(); }
+function doSearch(q){ searchQ=q; render(); }
+function doSort(v){ sortV=v; render(); }
+function setView(v){ viewMode=v; document.getElementById('grid').className=v==='list'?'list-view':''; document.getElementById('vbg').classList.toggle('active',v==='grid'); document.getElementById('vbl').classList.toggle('active',v==='list'); }
+
+// ── SIDEBAR ──
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sb-ov').classList.toggle('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-ov').classList.remove('open'); }
+
+// ── ADD MODAL ──
+function openAdd(){ editMode=false; editId=null; selFiles=[]; selTags=[]; resetForm(); document.getElementById('add-ov').classList.add('open'); }
+function closeAdd(){ document.getElementById('add-ov').classList.remove('open'); }
+function resetForm(){
+  document.getElementById('add-title').textContent='Ajouter un document';
+  document.getElementById('dz-sel').textContent='';
+  document.getElementById('note-inp').value='';
+  document.getElementById('name-inp').value='';
+  document.getElementById('cat-inp').value=categories[0]?.id||'general';
+  document.getElementById('tag-inp').value='';
+  document.getElementById('prog').style.display='none';
+  renderTags();
+}
+
+function dzOv(e){ e.preventDefault(); document.getElementById('dz').classList.add('over'); }
+function dzLv(){ document.getElementById('dz').classList.remove('over'); }
+function dzDrop(e){ e.preventDefault(); document.getElementById('dz').classList.remove('over'); if(e.dataTransfer.files.length){ selFiles=Array.from(e.dataTransfer.files); showSel(); } }
+function fileSel(e){ if(e.target.files.length){ selFiles=Array.from(e.target.files); showSel(); } }
+function showSel(){
+  const n=selFiles.map(f=>f.name).join(', ');
+  document.getElementById('dz-sel').textContent=selFiles.length>1?`${selFiles.length} fichiers : ${n}`:n;
+  if(selFiles.length===1&&!document.getElementById('name-inp').value) document.getElementById('name-inp').value=selFiles[0].name.replace(/\.[^.]+$/,'');
+  autocat(selFiles[0].name);
+}
+function autocat(fn){
+  const f=fn.toLowerCase();
+  const m={moteur:['moteur','engine','cylindre','soupape','piston','culasse'],electricite:['electr','altern','demarr','fusible','relais'],diagnostic:['diagnos','obd','code','erreur','defaut','scan'],carrosserie:['carros','porte','capot','aile','pare'],transmission:['boite','transmis','embrayage'],freinage:['frein','brake','plaquette','disque','etrier'],suspension:['suspens','amortis','ressort']};
+  for(const[c,kws]of Object.entries(m)) if(kws.some(k=>f.includes(k))){ document.getElementById('cat-inp').value=c; break; }
+}
+
+// ── TAGS ──
+function tagKd(e){
+  if((e.key==='Enter'||e.key===',')&&e.target.value.trim()){ e.preventDefault(); addTag(e.target.value.trim()); e.target.value=''; }
+  else if(e.key==='Backspace'&&!e.target.value&&selTags.length) removeTag(selTags[selTags.length-1]);
+}
+function addTag(t){ t=t.toLowerCase().replace(/\s+/g,'-').replace(/,/g,''); if(!t||selTags.includes(t)) return; selTags.push(t); renderTags(); }
+function removeTag(t){ selTags=selTags.filter(x=>x!==t); renderTags(); }
+function renderTags(){
+  const w=document.getElementById('tags-wrap'); w.querySelectorAll('.tpill').forEach(p=>p.remove());
+  const inp=document.getElementById('tag-inp');
+  selTags.forEach(t=>{ const pill=document.createElement('span'); pill.className='tpill'; pill.innerHTML=`${eh(t)} <button onclick="removeTag('${eh(t)}')">&times;</button>`; w.insertBefore(pill,inp); });
+}
+
+// ── SAVE ──
+function getType(mime,name){
+  const m=(mime||'').toLowerCase(); const n=(name||'').toLowerCase();
+  if(m.startsWith('image/')||/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i.test(n)) return 'image';
+  if(m==='application/pdf'||n.endsWith('.pdf')) return 'pdf';
+  if(m.startsWith('video/')||/\.(mp4|mov|avi|mkv|webm)$/i.test(n)) return 'video';
+  if(m==='application/zip'||m==='application/x-zip-compressed'||n.endsWith('.zip')) return 'zip';
+  return 'file';
+}
+async function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
+async function toThumb(f){ return new Promise(res=>{ const img=new Image(); const url=URL.createObjectURL(f); img.onload=()=>{ const c=document.createElement('canvas'); const MAX=200; const ratio=Math.min(MAX/img.width,MAX/img.height); c.width=img.width*ratio; c.height=img.height*ratio; c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',0.6)); }; img.onerror=()=>{ URL.revokeObjectURL(url); res(null); }; img.src=url; }); }
+
+async function saveDoc(){
+  const ti=document.getElementById('tag-inp'); if(ti.value.trim()) addTag(ti.value.trim());
+  const name=document.getElementById('name-inp').value.trim();
+  const note=document.getElementById('note-inp').value.trim();
+  const cat=document.getElementById('cat-inp').value;
+  if(editMode&&editId){
+    const doc=docs.find(d=>d.id===editId);
+    if(doc){ doc.name=name||doc.name; doc.cat=cat; doc.note=note; doc.tags=[...selTags]; }
+    saveLocal(); scheduleSave(); updateCounts(); buildCatSidebar(); render(); closeAdd(); toast('Document modifié'); return;
+  }
+  if(!selFiles.length&&!note){ toast('Sélectionne un fichier ou ajoute une note','warn'); return; }
+  const prog=document.getElementById('prog'); const bar=document.getElementById('prog-bar');
+  prog.style.display='block';
+  const files=selFiles.length?selFiles:[null];
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    bar.style.width=Math.round(((i+.5)/files.length)*100)+'%';
+    const type=file?getType(file.type,file.name):'note';
+    const doc={
+      id:'d'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      name:file?(name||file.name.replace(/\.[^.]+$/,'')):(name||'Note'),
+      cat, tags:[...selTags], note,
+      date:new Date().toISOString(),
+      size:file?file.size:note.length,
+      mimeType:file?file.type:'text/plain',
+      type, thumb:null, driveFileId:null, data:null
+    };
+    if(file){
+      if(type==='image') doc.thumb=await toThumb(file);
+      if(token){ doc.driveFileId=await uploadFile(file); }
+      else if(file.size<4*1024*1024){ doc.data=await toBase64(file); }
+    }
+    docs.unshift(doc);
+    bar.style.width=Math.round(((i+1)/files.length)*100)+'%';
+  }
+  saveLocal(); scheduleSave(); updateCounts(); buildCatSidebar(); render(); closeAdd();
+  toast(files.length>1?`${files.length} documents ajoutés`:'Document ajouté');
+}
+
+// ── DELETE / EDIT ──
+function delDoc(id){ if(!confirm('Supprimer ce document ?')) return; docs=docs.filter(d=>d.id!==id); saveLocal(); scheduleSave(); updateCounts(); buildCatSidebar(); render(); toast('Supprimé'); }
+function delFromViewer(){ if(!viewerId) return; closeViewer(); delDoc(viewerId); }
+function editDoc(id){
+  const doc=docs.find(d=>d.id===id); if(!doc) return;
+  editMode=true; editId=id; selTags=[...(doc.tags||[])];
+  resetForm();
+  document.getElementById('add-title').textContent='Modifier le document';
+  document.getElementById('name-inp').value=doc.name;
+  document.getElementById('note-inp').value=doc.note||'';
+  document.getElementById('cat-inp').value=doc.cat;
+  document.getElementById('dz-sel').textContent=doc.type!=='note'?'(fichier existant conservé)':'';
+  renderTags(); closeViewer(); document.getElementById('add-ov').classList.add('open');
+}
+function editCurrent(){ if(viewerId) editDoc(viewerId); }
+
+// ── VIEWER ──
+async function openViewer(id){
+  const doc=docs.find(d=>d.id===id); if(!doc) return;
+  viewerId=id;
+  const color=getCatColor(doc.cat);
+  document.getElementById('vw-name').textContent=doc.name;
+  document.getElementById('vw-cat').className='tag';
+  document.getElementById('vw-cat').style.cssText=`background:${color}22;color:${color}`;
+  document.getElementById('vw-cat').textContent=getCatLabel(doc.cat);
+  document.getElementById('vw-date').textContent=new Date(doc.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('vw-size').textContent=fSize(doc.size);
+  const tw=document.getElementById('vw-tags');
+  tw.innerHTML=doc.tags&&doc.tags.length?`<div style="font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;">Tags</div>${doc.tags.map(t=>`<span class="tag" style="background:${color}22;color:${color};margin-right:4px;">${eh(t)}</span>`).join('')}`:'';
+  const nw=document.getElementById('vw-note');
+  nw.innerHTML=doc.note?`<div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Note</div><div style="font-size:13px;color:var(--text2);line-height:1.65;white-space:pre-wrap;">${eh(doc.note)}</div>`:'';
+  const vc=document.getElementById('viewer-content');
+  vc.innerHTML=`<div class="loading-prev"><span class="spin-icon">⏳</span> Chargement…</div>`;
+  document.getElementById('view-ov').classList.add('open');
+  let src=doc.data||null;
+  if(!src&&doc.driveFileId&&token) src=await getBlobUrl(doc.driveFileId);
+  if(doc.type==='image'&&src){
+    vc.innerHTML=`<img src="${src}" alt="${eh(doc.name)}">`;
+  } else if(doc.type==='video'&&src){
+    vc.innerHTML=`<video controls src="${src}" style="max-width:100%;max-height:55vh;border-radius:var(--r);"></video>`;
+  } else if(doc.type==='pdf'&&src){
+    vc.innerHTML=`<iframe src="${src}" style="width:100%;height:55vh;border-radius:var(--r);border:none;background:#fff;"></iframe>`;
+  } else if(doc.type==='zip'&&src){
+    await renderZip(src, vc);
+  } else if(doc.type==='note'){
+    vc.innerHTML=`<div style="padding:16px;background:var(--bg3);border-radius:var(--r);width:100%;font-size:14px;line-height:1.7;color:var(--text2);white-space:pre-wrap;">${eh(doc.note||'Note vide')}</div>`;
+  } else {
+    vc.innerHTML=`<div class="no-prev"><div class="icon">${fIcon(doc.type,doc.mimeType)}</div><div style="font-size:14px;margin-bottom:6px;">${eh(doc.name)}</div><div style="font-size:12px;color:var(--text3);">Aperçu non disponible — télécharge le fichier pour l'ouvrir</div></div>`;
+  }
+}
+
+// ── ZIP VIEWER ──
+async function renderZip(src, container){
+  try{
+    if(!window.JSZip){ container.innerHTML=`<div class="no-prev"><div class="icon">🗜️</div><div>Bibliothèque ZIP non disponible</div></div>`; return; }
+    const resp=await fetch(src);
+    const buf=await resp.arrayBuffer();
+    const zip=await JSZip.loadAsync(buf);
+    const files=[];
+    zip.forEach((path,entry)=>{ if(!entry.dir) files.push({path,entry}); });
+    files.sort((a,b)=>a.path.localeCompare(b.path));
+    const rows=files.map(f=>{
+      const size=f.entry._data?f.entry._data.uncompressedSize:0;
+      const icon=zipFileIcon(f.path);
+      return `<div class="zip-item" onclick="dlZipEntry(this,'${eh(f.path)}')" data-path="${eh(f.path)}">
+        <span class="zip-item-icon">${icon}</span>
+        <span class="zip-item-name">${eh(f.path)}</span>
+        <span class="zip-item-size">${fSize(size)}</span>
+        <button class="zip-item-dl" onclick="event.stopPropagation();dlZipEntry(this,'${eh(f.path)}')">⬇</button>
+      </div>`;
+    }).join('');
+    container.innerHTML=`<div class="zip-list" style="width:100%">
+      <div class="zip-header"><span>${files.length} fichier(s) dans l'archive</span><span style="color:var(--accent);">Cliquer pour télécharger</span></div>
+      ${rows}
+    </div>`;
+    // Store zip reference
+    container._zip=zip;
+  }catch(e){
+    container.innerHTML=`<div class="no-prev"><div class="icon">🗜️</div><div style="font-size:14px;">Impossible de lire le ZIP</div><div style="font-size:12px;color:var(--text3);margin-top:6px;">${e.message}</div></div>`;
+  }
+}
+
+async function dlZipEntry(el, path){
+  const vc=document.getElementById('viewer-content');
+  const zip=vc._zip; if(!zip) return;
+  try{
+    const entry=zip.file(path); if(!entry) return;
+    const blob=await entry.async('blob');
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url;
+    a.download=path.split('/').pop();
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(e){ toast('Erreur téléchargement','err'); }
+}
+
+function zipFileIcon(path){
+  const n=path.toLowerCase();
+  if(/\.(jpg|jpeg|png|gif|webp|svg)$/.test(n)) return '🖼️';
+  if(/\.pdf$/.test(n)) return '📕';
+  if(/\.(mp4|mov|avi|mkv)$/.test(n)) return '🎬';
+  if(/\.(doc|docx)$/.test(n)) return '📘';
+  if(/\.(xls|xlsx)$/.test(n)) return '📊';
+  if(/\.(txt|md)$/.test(n)) return '📄';
+  return '📄';
+}
+
+function closeViewer(){ document.getElementById('view-ov').classList.remove('open'); viewerId=null; }
+
+async function dlDoc(){
+  const doc=docs.find(d=>d.id===viewerId); if(!doc) return;
+  let src=doc.data;
+  if(!src&&doc.driveFileId&&token) src=await getBlobUrl(doc.driveFileId);
+  if(!src){ toast('Aucun fichier disponible','warn'); return; }
+  const a=document.createElement('a'); a.href=src; a.download=doc.name+(doc.type==='zip'?'.zip':''); a.click();
+}
+
+// ── TOAST ──
+function toast(msg,type){
+  const t=document.createElement('div'); t.className='toast';
+  t.style.background=type==='warn'?'var(--accent)':type==='err'?'var(--danger)':'var(--success)';
+  t.style.color=type==='warn'?'#1a0e00':'#fff';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// ── EVENTS ──
+document.getElementById('add-ov').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeAdd(); });
+document.getElementById('view-ov').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeViewer(); });
+document.getElementById('newcat-ov').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeNewCat(); });
+document.getElementById('newcat-name').addEventListener('keydown',e=>{ if(e.key==='Enter') saveNewCat(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeAdd(); closeViewer(); closeNewCat(); } if((e.ctrlKey||e.metaKey)&&e.key==='f'){ e.preventDefault(); document.getElementById('search').focus(); } });
+setInterval(()=>{ if(dirty&&token) pushDB(); },60000);
+</script>
+</body>
+</html>
